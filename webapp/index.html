@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QQ 群抽奖</title>
+<link rel="icon" href="/icon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="180x180" href="/icon-180.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════ 左侧设置 ══════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">抽</div>
+      <div>
+        <div class="brand-title">QQ 群抽奖</div>
+        <div class="brand-sub">活跃群友随机抽奖</div>
+      </div>
+      <button class="icon-btn" id="theme-toggle" title="切换浅色 / 深色">◐</button>
+    </div>
+
+    <div class="side-scroll">
+      <section class="block">
+        <h3 class="block-title">机器人</h3>
+        <div class="bot-status" id="bot-status">
+          <span class="dot"></span>
+          <div class="bot-status-text">
+            <div class="bot-status-title" id="bot-title">正在检查…</div>
+            <div class="bot-status-sub" id="bot-sub">查看 NapCat 是否在运行</div>
+          </div>
+        </div>
+        <div class="inline-actions">
+          <button class="btn ghost sm" id="btn-bot-start">启动机器人</button>
+          <button class="btn ghost sm" id="btn-bot-login">扫码登录</button>
+          <button class="btn ghost sm" id="btn-bot-refresh" title="重新检查状态">刷新</button>
+        </div>
+        <label class="field" id="bot-group-field" hidden>
+          <span class="label">抽奖群</span>
+          <select id="bot-group"></select>
+        </label>
+        <p class="hint" id="bot-hint">启动后会自动登录（免扫码），首次使用需要扫码一次。</p>
+      </section>
+
+      <section class="block">
+        <h3 class="block-title">数据来源</h3>
+        <div class="segmented" id="source-switch" role="tablist">
+          <button data-source="file" class="seg">离线记录</button>
+          <button data-source="onebot" class="seg">机器人接口</button>
+        </div>
+
+        <div class="field-group" data-when="file">
+          <label class="field">
+            <span class="label">聊天记录文件</span>
+            <input type="text" id="file-path" placeholder="data/messages.json" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="label">文件格式</span>
+            <select id="file-format">
+              <option value="auto">自动识别</option>
+              <option value="json">JSON / JSONL</option>
+              <option value="csv">CSV</option>
+              <option value="text">文本记录</option>
+            </select>
+          </label>
+          <p class="hint" id="file-hint">支持 json / jsonl / csv / txt，相对路径基于程序目录。</p>
+        </div>
+
+        <div class="field-group" data-when="onebot" hidden>
+          <label class="field">
+            <span class="label">群号</span>
+            <input type="text" id="group-id" placeholder="例如 123456789" inputmode="numeric" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="label">机器人 HTTP 地址</span>
+            <input type="text" id="onebot-url" placeholder="http://127.0.0.1:3000" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="label">access_token</span>
+            <input type="password" id="onebot-token" placeholder="没设置就留空" spellcheck="false">
+          </label>
+          <div class="inline-actions">
+            <button class="btn ghost sm" id="btn-test">连接测试</button>
+            <button class="btn ghost sm" id="btn-members">拉取群成员</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h3 class="block-title">消息存档</h3>
+        <div class="archive-box" id="archive-box">
+          <div class="archive-line"><span>库内消息</span><b id="archive-total">—</b></div>
+          <div class="archive-line"><span>历史跨度</span><b id="archive-span">—</b></div>
+          <div class="archive-line"><span>同步间隔</span><b id="archive-interval">—</b></div>
+          <p class="hint" id="archive-hint">正在读取存档状态…</p>
+        </div>
+        <div class="inline-actions">
+          <button class="btn ghost sm" id="btn-archive-sync">立即同步</button>
+          <button class="btn ghost sm" id="btn-archive-open" title="在文件管理器中定位存档数据库">打开存档目录</button>
+        </div>
+      </section>
+
+      <section class="block">
+        <h3 class="block-title">抽奖范围</h3>
+        <div class="segmented pool-switch" id="pool-switch" role="tablist">
+          <button data-pool="active" class="seg">活跃群友</button>
+          <button data-pool="all_members" class="seg">全群成员</button>
+        </div>
+        <p class="hint" id="pool-hint"></p>
+      </section>
+
+      <section class="block">
+        <h3 class="block-title">抽奖规则</h3>
+        <div data-pool-when="active">
+          <div class="switch-row">
+            <div>
+              <div class="switch-label">自动适配统计窗口</div>
+              <div class="switch-hint">以「缓存能完整覆盖的时段」为准，保证每个候选人的资格都是完整的（推荐）</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="window-auto" checked><span></span></label>
+          </div>
+          <label class="field" id="days-field">
+            <span class="label">统计窗口 <b class="val" id="days-val">3 天</b></span>
+            <input type="range" id="days" min="0.25" max="14" step="0.25" value="3">
+            <span class="hint">只统计这段时间内发过言的群友</span>
+          </label>
+          <label class="field">
+            <span class="label">权重上限 <b class="val" id="cap-val">不限制</b></span>
+            <input type="range" id="weight-cap" min="0" max="500" step="10" value="0">
+            <span class="hint">默认不限制（0）。担心有人刷屏拉高概率时，再调到 20~500 之间封顶</span>
+          </label>
+          <div class="switch-row">
+            <div>
+              <div class="switch-label">按发言条数加权</div>
+              <div class="switch-hint">关闭后，窗口内发过言的每人等概率</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="weighting" checked><span></span></label>
+          </div>
+        </div>
+        <div data-pool-when="all_members" hidden>
+          <div class="note">
+            <span class="ico">⚖️</span>
+            <span>全群成员抽取<strong>固定为每人等概率</strong>：不看发言多少，潜水成员同样有机会。
+            统计窗口、加权、权重上限这些参数在这个模式下不起作用，所以被收起来了。</span>
+          </div>
+        </div>
+        <div class="row">
+          <label class="field">
+            <span class="label">中奖人数</span>
+            <input type="number" id="winner-count" min="1" max="50" value="1">
+          </label>
+          <label class="field" data-pool-when="active">
+            <span class="label">最低发言</span>
+            <input type="number" id="min-messages" min="1" max="999" value="1">
+          </label>
+        </div>
+        <div class="switch-row">
+          <div>
+            <div class="switch-label">抽完自动发到群里</div>
+            <div class="switch-hint">需要机器人接口数据源</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="post-to-group"><span></span></label>
+        </div>
+        <button class="btn ghost sm block" id="btn-blacklist">管理排除名单 <span class="pill" id="blacklist-count">0</span></button>
+      </section>
+
+      <section class="block">
+        <h3 class="block-title">数据</h3>
+        <div class="stat-line"><span>记录</span><b id="data-size">—</b></div>
+        <div class="field">
+          <span class="label">随机种子</span>
+          <div class="inline-actions">
+            <input type="text" id="seed" placeholder="留空 = 每次随机" spellcheck="false">
+            <button class="btn ghost sm" id="btn-seed-rand" title="清空并使用随机种子">随机</button>
+          </div>
+          <span class="hint">填写固定数字可复现同一结果</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="side-actions">
+      <button class="btn ghost" id="btn-refresh" title="重新读取消息数据">刷新数据</button>
+      <button class="btn ghost" id="btn-save">保存设置</button>
+      <button class="btn primary big" id="btn-run-all">
+        <span class="btn-label">一键开跑</span>
+        <span class="spinner" hidden></span>
+      </button>
+      <button class="btn ghost big" id="btn-all-members" hidden>
+        <span class="btn-label">抽取全群成员</span>
+        <span class="spinner" hidden></span>
+      </button>
+      <button class="btn ghost big" id="btn-draw">
+        <span class="btn-label">开始抽奖</span>
+        <span class="spinner" hidden></span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════════ 右侧主区 ══════════════ -->
+  <main class="main">
+    <header class="topbar">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="result">开奖结果</button>
+        <button class="tab" data-tab="activity">活跃度</button>
+        <button class="tab" data-tab="history">历史记录</button>
+      </div>
+      <div class="topbar-right">
+        <span class="chip" id="status-chip"><i class="dot"></i><span>就绪</span></span>
+      </div>
+    </header>
+
+    <div class="scroll-area">
+
+      <!-- ── 开奖结果 ── -->
+      <section class="panel active" data-panel="result">
+        <div class="fairness" id="fairness-banner" hidden>
+          <span class="mark">⚠️</span>
+          <div>
+            <div class="fairness-title" id="fairness-title">数据覆盖不足</div>
+            <div class="fairness-sub" id="fairness-sub"></div>
+          </div>
+        </div>
+        <div class="card hero" id="hero-card">
+          <div class="hero-empty" id="hero-empty">
+            <div class="hero-emoji">🎲</div>
+            <h2>准备就绪，可以开奖了</h2>
+            <p>候选范围是<strong>统计窗口内发过言的群友</strong>。默认开启「自动适配窗口」，以缓存能完整覆盖的时段为准（保证公平）；也可以关掉它改成固定天数。先看「活跃度」确认名单，或直接点左下角的「一键开跑」。</p>
+            <div class="hero-actions">
+              <button class="btn primary" id="btn-hero-draw">立即抽奖</button>
+              <button class="btn ghost" id="btn-hero-stats">查看活跃度</button>
+            </div>
+          </div>
+
+          <div class="hero-result" id="hero-result" hidden>
+            <div class="hero-head">
+              <div>
+                <div class="eyebrow">开奖结果</div>
+                <h2 id="result-title">恭喜中奖</h2>
+              </div>
+              <div class="hero-meta" id="result-meta"></div>
+            </div>
+            <div class="winners" id="winners"></div>
+            <div class="hero-foot">
+              <button class="btn ghost sm" id="btn-copy">复制开奖文案</button>
+              <button class="btn ghost sm" id="btn-post">发送到群</button>
+              <div class="spacer"></div>
+              <button class="btn ghost sm" id="btn-export-csv">导出 CSV</button>
+              <button class="btn ghost sm" id="btn-export-json">导出 JSON</button>
+              <button class="btn ghost sm" id="btn-export-poster">导出海报</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="summary-card" hidden>
+          <div class="card-head"><h3>本次抽奖概览</h3></div>
+          <div class="metrics" id="summary-metrics"></div>
+          <div class="notes" id="summary-notes"></div>
+          <div class="steps" id="summary-steps" hidden></div>
+        </div>
+      </section>
+
+      <!-- ── 活跃度 ── -->
+      <section class="panel" data-panel="activity">
+        <div class="card">
+          <div class="card-head">
+            <h3>活跃度排行</h3>
+            <span class="muted" id="activity-window"></span>
+          </div>
+          <div class="metrics" id="activity-metrics"></div>
+          <div class="chart-wrap">
+            <canvas id="chart" height="0"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3>候选名单</h3>
+            <div class="search"><input type="search" id="table-filter" placeholder="搜索昵称或 QQ 号"></div>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th class="num">#</th>
+                  <th>群友</th>
+                  <th class="num">发言</th>
+                  <th class="num">中奖概率</th>
+                  <th>最后发言</th>
+                  <th class="act">操作</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+          <div class="notes" id="activity-notes"></div>
+        </div>
+      </section>
+
+      <!-- ── 历史 ── -->
+      <section class="panel" data-panel="history">
+        <div class="card">
+          <div class="card-head">
+            <h3>历史开奖</h3>
+            <span class="muted" id="history-path"></span>
+          </div>
+          <div id="history-list" class="history"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════ 排除名单弹窗 ══════════════ -->
+<div class="modal" id="modal-blacklist" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>排除名单</h3>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs small">
+        <button class="tab active" data-bl-tab="blacklist">黑名单</button>
+        <button class="tab" data-bl-tab="whitelist">白名单</button>
+      </div>
+      <p class="hint" id="bl-hint"></p>
+      <div class="chips" id="bl-chips"></div>
+      <div class="inline-actions">
+        <input type="text" id="bl-input" placeholder="输入 QQ 号后回车添加" spellcheck="false">
+        <button class="btn ghost sm" id="bl-add">添加</button>
+      </div>
+      <div class="switch-row compact">
+        <div>
+          <div class="switch-label">排除群主</div>
+          <div class="switch-hint">身份为 owner</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="ex-owner"><span></span></label>
+      </div>
+      <div class="switch-row compact">
+        <div>
+          <div class="switch-label">排除管理员</div>
+          <div class="switch-hint">身份为 admin</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="ex-admin"><span></span></label>
+      </div>
+      <div class="switch-row compact">
+        <div>
+          <div class="switch-label">自动排除机器人账号</div>
+          <div class="switch-hint">内置常见机器人 QQ 号与昵称关键字</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="ex-bot" checked disabled><span></span></label>
+      </div>
+      <div id="members-box" hidden>
+        <div class="card-head"><h3 class="small">群成员（点击加入黑名单）</h3></div>
+        <div class="members" id="members-list"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>关闭</button>
+      <button class="btn primary" id="bl-save">保存名单</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ 海报预览弹窗 ══════════════ -->
+<div class="modal" id="modal-poster" hidden>
+  <div class="modal-card wide">
+    <div class="modal-head">
+      <h3>中奖海报</h3>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="modal-body center">
+      <canvas id="poster-canvas"></canvas>
+      <p class="hint">已按 2 倍分辨率渲染，直接保存即可发到群里。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>关闭</button>
+      <button class="btn primary" id="btn-poster-download">保存图片</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ 扫码登录弹窗 ══════════════ -->
+<div class="modal" id="modal-qr" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>扫码登录机器人</h3>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="qr-body">
+        <div class="qr-box"><img id="qr-img" alt="登录二维码"></div>
+        <p class="qr-tip" id="qr-tip">用手机 QQ 扫码并确认登录。</p>
+      </div>
+      <div class="qr-done" id="qr-done" hidden>
+        <div class="big-mark">✅</div>
+        <div>
+          <div style="font-size:15px;font-weight:650" id="qr-done-title">登录成功</div>
+          <div class="hint" id="qr-done-sub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="btn-qr-refresh">换一张二维码</button>
+      <button class="btn primary" id="btn-qr-finish">完成</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+<div class="busy" id="busy" hidden><div class="busy-card"><span class="spinner big"></span><span id="busy-text">处理中…</span></div></div>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>

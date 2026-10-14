@@ -1,0 +1,38 @@
+{
+  "_说明": "由界面或命令行生成。以 _ 开头的键会被程序忽略，可自行加注释。默认用仓库自带的演示数据（source=file），想接机器人就把 source 改成 onebot 并填 group_id。",
+  "source": "file",
+  "group_id": "",
+  "days": 3.0,
+  "window_mode": "auto",
+  "pool": "active",
+  "winners": 1,
+  "weighting": true,
+  "weight_cap": 0,
+  "min_messages": 1,
+  "exclude_roles": [],
+  "blacklist": [
+    "10086"
+  ],
+  "whitelist": [],
+  "seed": null,
+  "post_to_group": false,
+  "history_file": "data/history.jsonl",
+  "archive": {
+    "enabled": true,
+    "path": "data/archive.db",
+    "sync_interval_seconds": 300,
+    "auto_sync": true
+  },
+  "file": {
+    "path": "data/messages.json",
+    "format": "auto"
+  },
+  "onebot": {
+    "base_url": "http://127.0.0.1:3000",
+    "access_token": "",
+    "fetch_limit": 30000,
+    "page_size": 1500,
+    "max_pages": 300,
+    "exclude_self": true
+  }
+}
