@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 抽奖结果与拉取下来的聊天记录（含隐私，不要提交）
+data/history.jsonl
+out/
+*.log
+
+# 界面窗口使用的浏览器临时配置
+.browser-profile*/
+data/_trash/
+
+# 本地消息存档（体积会持续增长，且含群成员 QQ 号）
+data/archive.db*

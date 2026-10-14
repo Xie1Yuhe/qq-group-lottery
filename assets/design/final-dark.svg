@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#6f8bff"/><stop offset="0.55" stop-color="#4f6ef7"/><stop offset="1" stop-color="#3b55d9"/></linearGradient><radialGradient id="glow" cx="0.5" cy="0.46" r="0.52"><stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs>
+<rect x="0" y="0" width="512" height="512" rx="114" fill="url(#bg)"/><rect x="0" y="0" width="512" height="512" rx="114" fill="url(#glow)"/>
+<g transform="rotate(-7 256 256)"><rect x="155" y="173" width="292" height="292" rx="52" fill="#1b2a6b" opacity="0.30"/><rect x="150" y="160" width="292" height="292" rx="52" fill="#ffffff"/><circle cx="193" cy="203" r="26" fill="#1a2233"/><circle cx="296" cy="306" r="26" fill="#1a2233"/><circle cx="399" cy="409" r="26" fill="#1a2233"/></g><path d="M 394 66 C 412.6 109.4 412.6 109.4 456 128 C 412.6 146.6 412.6 146.6 394 190 C 375.4 146.6 375.4 146.6 332 128 C 375.4 109.4 375.4 109.4 394 66 Z" fill="#f2b53c"/>
+</svg>
